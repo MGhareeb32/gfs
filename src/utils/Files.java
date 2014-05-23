@@ -11,10 +11,10 @@ import java.util.Scanner;
 
 public class Files {
 
-    public static FileContent readFile(FileContent filename)
-        throws FileNotFoundException {
+    public static FileContent readFile(File root, FileContent filename)
+            throws FileNotFoundException {
 
-        File file = new File(filename.path);
+        File file = new File(root.getPath() + File.separator + filename.path);
         StringBuilder b = new StringBuilder();
         Scanner fr = new Scanner(file);
         while (fr.hasNext()) {
@@ -26,39 +26,52 @@ public class Files {
         return new FileContent(filename.path, b.toString());
     }
 
-    public static void writeFile(FileContent filename)
-        throws IOException {
+    public static void writeFile(File root, FileContent filename)
+            throws IOException {
 
-        File file = new File(filename.path);
-        String oldData = file.exists() ?
-            readFile(new FileContent(filename.path, null)).data : "";
+        File file = new File(root.getPath() + File.separator + filename.path);
+        file.getParentFile().mkdirs();
+        String oldData = file.exists() ? readFile(root, new FileContent(
+                filename.path, null)).data : "";
         FileWriter fw = new FileWriter(file);
         fw.write(oldData + filename.data);
+        fw.flush();
         fw.close();
     }
 
-    public static void getFiles(File dir, ArrayList<File> out) {
-        if (!dir.exists() || dir.listFiles() == null)
+    public static void getFiles(File root, ArrayList<File> out) {
+        if (root == null || !root.exists())
             return;
-        for (File f : dir.listFiles())
-            if (f.isFile())
-                out.add(f);
-            else
+        if (root.isDirectory())
+            for (File f : root.listFiles())
                 getFiles(f, out);
+        else
+            out.add(root);
+    }
+
+    public static void deleteDir(File root) {
+        if (root == null || !root.exists())
+            return;
+        if (root.isDirectory())
+            for (File f : root.listFiles())
+                deleteDir(f);
+        root.delete();
     }
 
     public static void main(String[] args) throws IOException {
         // list
-        ArrayList<File> out = new ArrayList<File>(); 
+        ArrayList<File> out = new ArrayList<File>();
         getFiles(new File("."), out);
         for (File file : out) {
             System.out.println(file);
         }
         // write
-        System.out.println(readFile(new FileContent("lala", null)).data);
-        writeFile(new FileContent("lala", "x"));
-        System.out.println(readFile(new FileContent("lala", null)).data);
-        writeFile(new FileContent("lala", "a"));
-        System.out.println(readFile(new FileContent("lala", null)).data);
+        File root = new File("./gfs");
+        String file = "file.txt";
+        writeFile(root, new FileContent(file, "x"));
+        System.out.println(readFile(root, new FileContent(file, null)).data);
+        writeFile(root, new FileContent(file, "a"));
+        System.out.println(readFile(root, new FileContent(file, null)).data);
+        deleteDir(root);
     }
 }

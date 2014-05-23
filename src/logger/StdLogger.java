@@ -17,14 +17,14 @@ public class StdLogger implements Logger {
     @Override
     public void log(String s) {
         synchronized (this) {
-            System.out.println(getTime() + " [" + owner + "] " + s);
+            System.out.println("LOG " + getTime() + "[" + owner + "] " + s);
         }
     }
 
     @Override
     public void err(String s) {
         synchronized (this) {
-            System.err.println(getTime() + " [" + owner + "] " + s);
+            System.out.println("ERR " + getTime() + "[" + owner + "] " + s);
         }
     }
 

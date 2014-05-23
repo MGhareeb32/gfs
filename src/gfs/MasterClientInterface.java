@@ -10,9 +10,9 @@ import java.rmi.RemoteException;
 
 public interface MasterClientInterface {
 
-    public ReadMsg read(String fileName)
-       throws FileNotFoundException, IOException, RemoteException;
+    public ReadMsg clientRead(String fileName)
+       throws RemoteException;
 
-    public WriteMsg write(FileContent data)
+    public WriteMsg clientWrite(FileContent data)
         throws RemoteException, IOException;
 }

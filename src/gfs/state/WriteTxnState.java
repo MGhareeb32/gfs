@@ -2,10 +2,9 @@ package gfs.state;
 
 import gfs.data.FileContent;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 import utils.Files;
@@ -27,9 +26,9 @@ public class WriteTxnState implements Comparable<WriteTxnState> {
         writes.add(data);
     }
 
-    public boolean commit() throws IOException {
+    public boolean commit(File root) throws IOException {
         for (FileContent c : writes)
-                Files.writeFile(c);
+                Files.writeFile(root, c);
         return true;
     }
 
@@ -56,11 +55,12 @@ public class WriteTxnState implements Comparable<WriteTxnState> {
     }
 
     public static void main(String[] args) throws IOException {
+        File root = new File("./gfs");
         WriteTxnState txn = new WriteTxnState(10, "lala");
         txn.write(new FileContent("lala", "A\n"));
         txn.write(new FileContent("lala", "B\n"));
         txn.write(new FileContent("lala", "C\n"));
-        System.out.println(txn.commit());
-        System.out.println(Files.readFile(new FileContent("lala", null)).data);
+        System.out.println(txn.commit(root));
+        System.out.println(Files.readFile(root, new FileContent("lala", null)).data);
     }
 }

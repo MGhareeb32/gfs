@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -77,10 +78,14 @@ public class Master implements MasterClientInterface, Runnable {
         }
     }
 
-    private Host assignReplica(String path) {
+    private Host assignReplica(FileContent data) {
         synchronized (lockLastAssignedReplica) {
             lastAssignedReplica++;
             lastAssignedReplica %= replicas.size();
+            log.log(String.format
+                ("File %s assigned to %s",
+                 data.path, replicas.get(lastAssignedReplica).toString()));
+            file2Replica.put(data, replicas.get(lastAssignedReplica));
             return replicas.get(lastAssignedReplica);
         }
     }
@@ -104,37 +109,45 @@ public class Master implements MasterClientInterface, Runnable {
     // GFS
 
     @Override
-    public ReadMsg read(String fileName)
-        throws FileNotFoundException, IOException, RemoteException {
-
+    public ReadMsg clientRead(String fileName) throws RemoteException {
         return new ReadMsg(nextTxnId(), System.currentTimeMillis(),
                            heartbeat());
     }
 
     @Override
-    public WriteMsg write(FileContent data)
+    public WriteMsg clientWrite(FileContent data)
         throws RemoteException, IOException {
 
-        // exists
-        if (file2Replica.containsKey(data))
-            return new WriteMsg(nextTxnId(), System.currentTimeMillis(),
-                                file2Replica.get(data));
         // new file
+        if (!file2Replica.containsKey(data))
+            assignReplica(data);
+        // exists
         return new WriteMsg(nextTxnId(), System.currentTimeMillis(),
-                            assignReplica(data.path));
+                            file2Replica.get(data));
     }
 
     //
 
-    @Override
-    public String toString() {
-        return me.toString() + "[" + root + "]";
+    public void init() {
+        log.log("Master ready");
+        // TODO Auto-generated method stub
     }
 
     @Override
     public void run() {
-        log.log("Master started");
         // TODO Auto-generated method stub
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                Host[] alive = heartbeat();
+                log.log("Heartbeat = " + Arrays.toString(alive));
+            } catch (InterruptedException e) {}
+        }
+    }
+
+    @Override
+    public String toString() {
+        return me.toString() + "[" + root + "]";
     }
 
     // Master [ip:port] [dir] [replica...]

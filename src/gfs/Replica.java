@@ -79,6 +79,7 @@ public class Replica implements ReplicaClientInterface,
     public WriteMsg write(long txnID, long msgSeqNum, FileContent data)
         throws RemoteException, IOException {
 
+        log.log(String.format("%d,%d write", txnID, msgSeqNum));
         // new txn
         if (!txnId2State.containsKey(txnID))
             txnId2State.put(txnID, new WriteTxnState(txnID, data.path));
@@ -91,17 +92,19 @@ public class Replica implements ReplicaClientInterface,
     public boolean commit(long txnID, long numOfMsgs)
         throws MsgNotFoundException, RemoteException, IOException {
 
+        log.log(String.format("%d commit", txnID));
         // bad txnID
         if (!txnId2State.containsKey(txnID))
             throw new MsgNotFoundException();
         // commit
-        txnId2State.get(txnID).commit();
+        txnId2State.get(txnID).commit(root);
         txnId2State.remove(txnID);
         return true;
     }
 
     @Override
     public boolean abort(long txnID) throws RemoteException {
+        log.log(String.format("%d abort", txnID));
         txnId2State.remove(txnID);
         return true;
     }
@@ -111,10 +114,13 @@ public class Replica implements ReplicaClientInterface,
     @Override
     public WriteMsg clientWrite(long txnID, long msgSeqNum, FileContent data)
         throws RemoteException, IOException {
+
         for (Host r : replicas)
             if (!me.equals(r))
                 replicaProvider.get(r).write(txnID, msgSeqNum, data);
-        return write(txnID, msgSeqNum, data);
+        WriteMsg out = write(txnID, msgSeqNum, data);
+        log.log(String.format("%d,%d written", txnID, msgSeqNum));
+        return out;
     }
 
     @Override
@@ -130,6 +136,7 @@ public class Replica implements ReplicaClientInterface,
                 } catch (Exception e) {
                     commited = false;
                 }
+        log.log(String.format(commited ? "%d committed" : "%d fail", txnID));
         return commited;
     }
 
@@ -145,21 +152,30 @@ public class Replica implements ReplicaClientInterface,
                 } catch (Exception e) {
                     aborted = false;
                 }
+        log.log(String.format(aborted ? "%d aborted" : "%d fail", txnID));
         return aborted;
     }
 
     @Override
     public FileContent clientRead(long txnID, FileContent data)
         throws RemoteException, IOException {
-        return Files.readFile(data);
+
+        return Files.readFile(root, data);
     }
 
     //
 
+    public void init() {
+        log.log("Cleaning root");
+        root.mkdirs();
+        Files.deleteDir(root);
+        root.mkdirs();
+        log.log("Replica ready");
+        // TODO Auto-generated method stub
+    }
+
     @Override
     public void run() {
-        log.log("Replica started");
-        root.mkdirs();
         // TODO Auto-generated method stub
     }
 
