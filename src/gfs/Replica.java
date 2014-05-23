@@ -4,6 +4,7 @@ import gfs.data.FileContent;
 import gfs.data.Host;
 import gfs.data.MsgNotFoundException;
 import gfs.data.WriteMsg;
+import gfs.replicaprovider.ReplicaReplicaInterfaceProvider;
 import gfs.state.WriteTxnState;
 
 import java.io.File;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import logger.DummyLogger;
+import logger.Logger;
 import utils.Files;
 
 public class Replica implements ReplicaClientInterface,
@@ -23,36 +26,51 @@ public class Replica implements ReplicaClientInterface,
     private File root;
 
     private Host me;
+    private ReplicaReplicaInterfaceProvider replicaProvider;
     private final List<Host> replicas = new ArrayList<Host>();
 
     private final Map<Long, WriteTxnState> txnId2State
         = new TreeMap<Long, WriteTxnState>(); // do we need locks?
 
+    private Logger log = new DummyLogger();
+
     // SETTERS
+
+    public Host getMe() {
+        return me;
+    }
 
     public void setMe(Host me) {
         this.me = me;
     }
-    
+
     public void setRoot(File root) {
         this.root = root;
+    }
+
+    public File getRoot() {
+        return root;
     }
 
     public void addReplica(Host replica) {
         replicas.add(replica);
     }
 
+    public void setReplicaProvider
+        (ReplicaReplicaInterfaceProvider replicaProvider) {
+
+        this.replicaProvider = replicaProvider;
+    }
+
+    public void setLogger(Logger log) {
+        this.log = log;
+    }
+
     // SERVER STATE
 
     @Override
-    public boolean isAlive() throws RemoteException {
+    public boolean heartbeat() throws RemoteException {
         return true;
-    }
-
-
-    private ReplicaReplicaInterface getReplica(Host r) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     // REPLICA-REPLICA
@@ -94,7 +112,8 @@ public class Replica implements ReplicaClientInterface,
     public WriteMsg clientWrite(long txnID, long msgSeqNum, FileContent data)
         throws RemoteException, IOException {
         for (Host r : replicas)
-            getReplica(r).write(txnID, msgSeqNum, data);
+            if (!me.equals(r))
+                replicaProvider.get(r).write(txnID, msgSeqNum, data);
         return write(txnID, msgSeqNum, data);
     }
 
@@ -104,12 +123,13 @@ public class Replica implements ReplicaClientInterface,
 
         boolean commited = commit(txnID, numOfMsgs);
         for (Host r : replicas)
-            try {
-                if (!getReplica(r).commit(txnID, numOfMsgs))
+            if (!me.equals(r))
+                try {
+                    if (!replicaProvider.get(r).commit(txnID, numOfMsgs))
+                        commited = false;
+                } catch (Exception e) {
                     commited = false;
-            } catch (Exception e) {
-                commited = false;
-            }
+                }
         return commited;
     }
 
@@ -117,13 +137,14 @@ public class Replica implements ReplicaClientInterface,
     public boolean clientAbort(long txnID) throws RemoteException {
 
         boolean aborted = abort(txnID);
-        try {
         for (Host r : replicas)
-            if (!getReplica(r).abort(txnID))
-                aborted = false;
-        } catch (Exception e) {
-            aborted = false;
-        }
+            if (!me.equals(r))
+                try {
+                    if (!replicaProvider.get(r).abort(txnID))
+                        aborted = false;
+                } catch (Exception e) {
+                    aborted = false;
+                }
         return aborted;
     }
 
@@ -137,9 +158,9 @@ public class Replica implements ReplicaClientInterface,
 
     @Override
     public void run() {
+        log.log("Replica started");
         root.mkdirs();
         // TODO Auto-generated method stub
-        
     }
 
     @Override
@@ -147,12 +168,15 @@ public class Replica implements ReplicaClientInterface,
         return me.toString() + "[" + root + "]";
     }
 
-    // Replica [ip] [port] [dir]
+    // Replica [ip:port] [dir] [replica...]
     public static void main(String[] args) {
         Replica r = new Replica();
-        r.setMe(new Host(args[0], Integer.parseInt(args[1])));
-        r.setRoot(new File(args[2]));
+        r.setMe(new Host(args[0]));
+        r.setRoot(new File(args[1]));
+        for (int i = 2; i < args.length; i++)
+            r.addReplica(new Host(args[i]));
         System.out.println("Starting " + r);
         new Thread(r).start();
     }
+
 }

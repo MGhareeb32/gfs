@@ -4,5 +4,5 @@ import java.rmi.RemoteException;
 
 public interface ReplicaMasterInterface {
 
-    public boolean isAlive() throws RemoteException;
+    public boolean heartbeat() throws RemoteException;
 }
