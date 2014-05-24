@@ -10,6 +10,7 @@ import gfs.MasterClientInterface;
 import gfs.Replica;
 import gfs.ReplicaClientInterface;
 import gfs.data.Host;
+import gfs.data.HostTcp;
 import gfs.hostprovider.SimpleMasterClientInterfaceProvider;
 import gfs.hostprovider.SimpleReplicaClientInterfaceProvider;
 import gfs.hostprovider.SimpleReplicaMasterInterfaceProvider;
@@ -28,15 +29,15 @@ public class OfflineSimHelper implements SimHelper {
         this.root = new File(root);
         this.clientReplicas = new SimpleReplicaClientInterfaceProvider();
         this.clientMaster = new SimpleMasterClientInterfaceProvider();
-        this.masterHost = new Host("localhost", 2000);
+        this.masterHost = new HostTcp("localhost", 2000);
         this.replicaHosts = new Host[nReplica];
         for (int i = 0; i < replicaHosts.length; i++)
-            replicaHosts[i] = new Host("localhost", 2001 + i);
+            replicaHosts[i] = new HostTcp("localhost", 2001 + i);
         this.threads = new ArrayList<Thread>();
     }
 
     @Override
-    public void start() {
+    public void start() throws Exception {
 
         // create master
         Master master = new Master();
@@ -91,6 +92,7 @@ public class OfflineSimHelper implements SimHelper {
         t.start();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void stop() {
         for (int i = threads.size() - 1; i >= 0; i--) {

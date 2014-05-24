@@ -17,12 +17,17 @@ public class Sim0 implements Sim {
 
     @Override
     public void sim(SimHelper sim) {
-        sim.start();
         Logger log = new StdLogger("client");
         String fileName = "file0.txt";
         FileContent[] data = new FileContent[3];
         for (int i = 0; i < data.length; i++)
             data[i] = new FileContent(fileName, Integer.toString(i));
+        try {
+            sim.start();
+        } catch (Exception e) {
+            log.err("Can't start simulation");
+            e.printStackTrace();
+        }
         // read non existent file
         log.log("READ NON-EXISTENT FILE");
         try {
@@ -75,8 +80,13 @@ public class Sim0 implements Sim {
             log.err(fileName + " can't read");
         }
         // done
-        sim.stop();
-        log.log("DONE");
+        try {
+            sim.stop();
+            log.log("DONE");
+        } catch (Exception e) {
+            log.err("Can't stop simulation");
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws Exception {

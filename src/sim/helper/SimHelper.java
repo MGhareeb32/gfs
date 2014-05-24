@@ -6,8 +6,8 @@ import gfs.data.Host;
 
 public interface SimHelper {
 
-    void start();
-    void stop();
+    void start() throws Exception;
+    void stop() throws Exception;
     MasterClientInterface getMaster();
     ReplicaClientInterface getReplica(Host h);
 }

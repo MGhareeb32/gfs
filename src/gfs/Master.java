@@ -9,6 +9,7 @@ import gfs.hostprovider.ReplicaMasterInterfaceProvider;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,7 +21,10 @@ import java.util.Set;
 import logger.DummyLogger;
 import logger.Logger;
 
-public class Master implements MasterClientInterface, Runnable {
+public class Master extends UnicastRemoteObject
+                    implements MasterClientInterface, Runnable {
+
+    private static final long serialVersionUID = 6490583536479586297L;
 
     private File root;
 
@@ -40,6 +44,10 @@ public class Master implements MasterClientInterface, Runnable {
     private Object lockAliveReplicas = new Object();
 
     private Logger log = new DummyLogger();
+
+    public Master() throws RemoteException {
+        super();
+    }
 
     // SETTERS
 
@@ -147,16 +155,5 @@ public class Master implements MasterClientInterface, Runnable {
     @Override
     public String toString() {
         return me.toString() + "[" + root + "]";
-    }
-
-    // Master [ip:port] [dir] [replica...]
-    public static void main(String[] args) {
-        Master m = new Master();
-        m.setMe(new Host(args[0]));
-        m.setRoot(new File(args[1]));
-        for (int i = 2; i < args.length; i++)
-            m.addReplica(new Host(args[i]));
-        System.out.println("Starting " + m);
-        new Thread(m).start();
     }
 }

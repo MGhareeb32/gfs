@@ -10,6 +10,7 @@ import gfs.hostprovider.ReplicaReplicaInterfaceProvider;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,12 @@ import logger.DummyLogger;
 import logger.Logger;
 import utils.Files;
 
-public class Replica implements ReplicaClientInterface,
+public class Replica extends UnicastRemoteObject
+                     implements ReplicaClientInterface,
                                 ReplicaReplicaInterface,
                                 ReplicaMasterInterface, Runnable {
+
+    private static final long serialVersionUID = -7414743350021030181L;
 
     private File root;
 
@@ -33,6 +37,10 @@ public class Replica implements ReplicaClientInterface,
         = new TreeMap<Long, WriteTxnState>(); // do we need locks?
 
     private Logger log = new DummyLogger();
+
+    public Replica() throws RemoteException {
+        super();
+    }
 
     // SETTERS
 
@@ -195,17 +203,6 @@ public class Replica implements ReplicaClientInterface,
     @Override
     public String toString() {
         return me.toString() + "[" + root + "]";
-    }
-
-    // Replica [ip:port] [dir] [replica...]
-    public static void main(String[] args) {
-        Replica r = new Replica();
-        r.setMe(new Host(args[0]));
-        r.setRoot(new File(args[1]));
-        for (int i = 2; i < args.length; i++)
-            r.addReplica(new Host(args[i]));
-        System.out.println("Starting " + r);
-        new Thread(r).start();
     }
 
 }
