@@ -1,4 +1,4 @@
-package gfs.replicaprovider;
+package gfs.hostprovider;
 
 import gfs.ReplicaReplicaInterface;
 import gfs.data.Host;

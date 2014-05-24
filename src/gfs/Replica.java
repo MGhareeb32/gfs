@@ -4,8 +4,8 @@ import gfs.data.FileContent;
 import gfs.data.Host;
 import gfs.data.MsgNotFoundException;
 import gfs.data.WriteMsg;
-import gfs.replicaprovider.ReplicaReplicaInterfaceProvider;
-import gfs.state.WriteTxnState;
+import gfs.data.WriteTxnState;
+import gfs.hostprovider.ReplicaReplicaInterfaceProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,20 +79,25 @@ public class Replica implements ReplicaClientInterface,
     public WriteMsg write(long txnID, long msgSeqNum, FileContent data)
         throws RemoteException, IOException {
 
-        log.log(String.format("%d,%d write", txnID, msgSeqNum));
+        log.log(String.format("write(%s,%d,%d)", data.path, txnID, msgSeqNum));
         // new txn
         if (!txnId2State.containsKey(txnID))
             txnId2State.put(txnID, new WriteTxnState(txnID, data.path));
+        // make sure if good seqNum
+        if (msgSeqNum != txnId2State.get(txnID).getLastSeqNum() + 1)
+            throw new IOException("Bad msgSeqNum");
         // write
-        txnId2State.get(txnID).write(data);
-        return new WriteMsg(txnID, System.currentTimeMillis(), me);
+        WriteTxnState txnState = txnId2State.get(txnID);
+        txnState.write(data);
+        return new WriteMsg(txnID, System.currentTimeMillis(),
+                            me, txnState.getLastSeqNum() + 1);
     }
 
     @Override
     public boolean commit(long txnID, long numOfMsgs)
         throws MsgNotFoundException, RemoteException, IOException {
 
-        log.log(String.format("%d commit", txnID));
+        log.log(String.format("commit(%d,%d)", txnID, numOfMsgs));
         // bad txnID
         if (!txnId2State.containsKey(txnID))
             throw new MsgNotFoundException();
@@ -104,7 +109,7 @@ public class Replica implements ReplicaClientInterface,
 
     @Override
     public boolean abort(long txnID) throws RemoteException {
-        log.log(String.format("%d abort", txnID));
+        log.log(String.format("abort(%d)", txnID));
         txnId2State.remove(txnID);
         return true;
     }
@@ -119,7 +124,8 @@ public class Replica implements ReplicaClientInterface,
             if (!me.equals(r))
                 replicaProvider.get(r).write(txnID, msgSeqNum, data);
         WriteMsg out = write(txnID, msgSeqNum, data);
-        log.log(String.format("%d,%d written", txnID, msgSeqNum));
+        log.log(String.format("  done write(%s,%d, %d)",
+                              data.path, txnID, msgSeqNum));
         return out;
     }
 
@@ -136,7 +142,9 @@ public class Replica implements ReplicaClientInterface,
                 } catch (Exception e) {
                     commited = false;
                 }
-        log.log(String.format(commited ? "%d committed" : "%d fail", txnID));
+        log.log(String.format(commited ? "  done commit(%d,%d)"
+                                       : "  fail commit(%d,%d)",
+                              txnID, numOfMsgs));
         return commited;
     }
 
@@ -152,7 +160,9 @@ public class Replica implements ReplicaClientInterface,
                 } catch (Exception e) {
                     aborted = false;
                 }
-        log.log(String.format(aborted ? "%d aborted" : "%d fail", txnID));
+        log.log(String.format(aborted ? "  done abort(%d)"
+                                      : "  fail abort(%d)",
+                              txnID));
         return aborted;
     }
 
@@ -160,17 +170,20 @@ public class Replica implements ReplicaClientInterface,
     public FileContent clientRead(long txnID, FileContent data)
         throws RemoteException, IOException {
 
-        return Files.readFile(root, data);
+        log.log(String.format("read(%s)", data.path));
+        FileContent c = Files.readFile(root, data);
+        log.log(String.format("  done read(%s)", data.path));
+        return c;
     }
 
     //
 
     public void init() {
-        log.log("Cleaning root");
+        log.log("init()");
         root.mkdirs();
         Files.deleteDir(root);
         root.mkdirs();
-        log.log("Replica ready");
+        log.log("Root cleaned");
         // TODO Auto-generated method stub
     }
 

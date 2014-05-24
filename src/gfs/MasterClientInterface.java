@@ -4,7 +4,6 @@ import gfs.data.FileContent;
 import gfs.data.ReadMsg;
 import gfs.data.WriteMsg;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 

@@ -4,10 +4,9 @@ import gfs.data.FileContent;
 import gfs.data.Host;
 import gfs.data.ReadMsg;
 import gfs.data.WriteMsg;
-import gfs.replicaprovider.ReplicaMasterInterfaceProvider;
+import gfs.hostprovider.ReplicaMasterInterfaceProvider;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -83,7 +82,7 @@ public class Master implements MasterClientInterface, Runnable {
             lastAssignedReplica++;
             lastAssignedReplica %= replicas.size();
             log.log(String.format
-                ("File %s assigned to %s",
+                ("%s assigned to %s",
                  data.path, replicas.get(lastAssignedReplica).toString()));
             file2Replica.put(data, replicas.get(lastAssignedReplica));
             return replicas.get(lastAssignedReplica);
@@ -123,13 +122,13 @@ public class Master implements MasterClientInterface, Runnable {
             assignReplica(data);
         // exists
         return new WriteMsg(nextTxnId(), System.currentTimeMillis(),
-                            file2Replica.get(data));
+                            file2Replica.get(data), 0);
     }
 
     //
 
     public void init() {
-        log.log("Master ready");
+        log.log("init()");
         // TODO Auto-generated method stub
     }
 
@@ -140,7 +139,7 @@ public class Master implements MasterClientInterface, Runnable {
             try {
                 Thread.sleep(1000);
                 Host[] alive = heartbeat();
-                log.log("Heartbeat = " + Arrays.toString(alive));
+                log.log("heartbeat() = " + Arrays.toString(alive));
             } catch (InterruptedException e) {}
         }
     }

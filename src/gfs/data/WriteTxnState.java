@@ -1,6 +1,4 @@
-package gfs.state;
-
-import gfs.data.FileContent;
+package gfs.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +28,10 @@ public class WriteTxnState implements Comparable<WriteTxnState> {
         for (FileContent c : writes)
                 Files.writeFile(root, c);
         return true;
+    }
+
+    public long getLastSeqNum() {
+        return writes.size() - 1;
     }
 
     @Override

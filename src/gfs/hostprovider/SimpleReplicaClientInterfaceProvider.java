@@ -1,4 +1,4 @@
-package gfs.replicaprovider;
+package gfs.hostprovider;
 
 import java.util.Map;
 import java.util.TreeMap;
