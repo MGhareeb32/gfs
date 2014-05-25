@@ -8,8 +8,6 @@ mkdir ./out
 find -name "*.java" > ./out/sources.txt
 javac -d './out' @./out/sources.txt
 
-rmic -classpath './out' -d './out' utils.rmitest.State
-
 cd ./out
 jar cfe RmiServer.jar utils.rmitest.RmiServer \
 './utils/rmitest/RmiServer.class' \
@@ -19,7 +17,6 @@ jar cfe RmiServer.jar utils.rmitest.RmiServer \
 
 jar cfe RmiClient.jar utils.rmitest.RmiClient \
 './utils/rmitest/RmiClient.class' \
-'./utils/rmitest/State_Stub.class' \
 './utils/rmitest/StateInterface.class' \
 './utils/Rmi.class'
 cd ..

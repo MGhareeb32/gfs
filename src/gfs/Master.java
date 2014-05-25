@@ -2,9 +2,11 @@ package gfs;
 
 import gfs.data.FileContent;
 import gfs.data.Host;
+import gfs.data.HostRmi;
 import gfs.data.ReadMsg;
 import gfs.data.WriteMsg;
 import gfs.hostprovider.ReplicaMasterInterfaceProvider;
+import gfs.hostprovider.RmiHostProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,8 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import utils.Rmi;
 import logger.DummyLogger;
 import logger.Logger;
+import logger.StdLogger;
 
 public class Master extends UnicastRemoteObject
                     implements MasterClientInterface, Runnable {
@@ -151,5 +155,35 @@ public class Master extends UnicastRemoteObject
     @Override
     public String toString() {
         return me.toString() + "[" + root + "]";
+    }
+
+    public static void main(String[] args) throws RemoteException {
+        HostRmi masterHost = null;
+        List<HostRmi> replicaHosts = new ArrayList<HostRmi>();
+        try {
+            masterHost = new HostRmi(args[0]);
+            for (int i = 1; i < args.length; i++)
+                replicaHosts.add(new HostRmi(args[i]));
+        } catch (Exception e) {
+            System.out.println("Usage:");
+            System.out.println("./Master.jar <master> <all-replicas>");
+            System.out.println("    <master>      <ip>:<port>/<rmi_name>");
+            System.out.println("    <replica>     <ip>:<port>/<rmi_name>");
+            System.exit(1);
+        }
+        // create master
+        Master master = new Master();
+        master.setMe(masterHost);
+        master.setLogger(new StdLogger(masterHost.toString()));
+        // rmi
+        Rmi.registerLocalObject(masterHost, master);
+        // give replicas to master
+        for (HostRmi r : replicaHosts)
+            master.addReplica(r);
+        // assign provider
+        master.setReplicaProvider(new RmiHostProvider());
+        // run
+        master.init();
+        master.run();
     }
 }

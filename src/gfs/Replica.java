@@ -2,10 +2,12 @@ package gfs;
 
 import gfs.data.FileContent;
 import gfs.data.Host;
+import gfs.data.HostRmi;
 import gfs.data.MsgNotFoundException;
 import gfs.data.WriteMsg;
 import gfs.data.WriteTxnState;
 import gfs.hostprovider.ReplicaReplicaInterfaceProvider;
+import gfs.hostprovider.RmiHostProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +20,9 @@ import java.util.TreeMap;
 
 import logger.DummyLogger;
 import logger.Logger;
+import logger.StdLogger;
 import utils.Files;
+import utils.Rmi;
 
 public class Replica extends UnicastRemoteObject
                      implements ReplicaClientInterface,
@@ -27,7 +31,7 @@ public class Replica extends UnicastRemoteObject
 
     private static final long serialVersionUID = -7414743350021030181L;
 
-    private File root;
+    private File root = new File("./gfs");
 
     private Host me;
     private ReplicaReplicaInterfaceProvider replicaProvider;
@@ -252,4 +256,33 @@ public class Replica extends UnicastRemoteObject
         return me.toString() + "[" + root + "]";
     }
 
+    public static void main(String[] args) throws RemoteException {
+        HostRmi replicaHost = null;
+        List<HostRmi> replicaHosts = new ArrayList<HostRmi>();
+        try {
+            replicaHost = new HostRmi(args[0]);
+            for (int i = 1; i < args.length; i++)
+                replicaHosts.add(new HostRmi(args[i]));
+        } catch (Exception e) {
+            System.out.println("Usage:");
+            System.out.println("./Replica.jar <replica> <all-replicas>");
+            System.out.println("    <master>      <ip>:<port>/<rmi_name>");
+            System.out.println("    <replica>     <ip>:<port>/<rmi_name>");
+            System.exit(1);
+        }
+        // create master
+        Replica replica = new Replica();
+        replica.setMe(replicaHost);
+        replica.setLogger(new StdLogger(replicaHost.toString()));
+        // rmi
+        Rmi.registerLocalObject(replicaHost, replica);
+        // give replicas to master
+        for (HostRmi r : replicaHosts)
+            replica.addReplica(r);
+        // assign provider
+        replica.setReplicaProvider(new RmiHostProvider());
+        // run
+        replica.init();
+        replica.run();
+    }
 }
