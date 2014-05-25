@@ -1,6 +1,11 @@
 package gfs.data;
 
-public class WriteMsg {
+import java.io.Serializable;
+
+public class WriteMsg implements Serializable {
+
+    private static final long serialVersionUID = 8605716990677642964L;
+
     public final long txnId;
     public final long timeStamp;
     public final Host loc;

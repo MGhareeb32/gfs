@@ -14,7 +14,7 @@ public interface ReplicaReplicaInterface extends Remote {
             throws RemoteException, IOException;
 
     public boolean commit(long txnID, long numOfMsgs)
-        throws MsgNotFoundException, RemoteException, IOException;
+        throws RemoteException, MsgNotFoundException, IOException;
 
     public boolean abort(long txnID) throws RemoteException;
 

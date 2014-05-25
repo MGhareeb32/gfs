@@ -1,19 +1,16 @@
 package sim.helper;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.Random;
-
 import gfs.data.FileContent;
 import gfs.data.Host;
-import gfs.data.MsgNotFoundException;
 import gfs.data.ReadMsg;
 import gfs.data.WriteMsg;
+
+import java.util.Random;
 
 public class SimClientHelper {
 
     public static FileContent read(SimHelper sim, String fileName)
-        throws IOException {
+        throws Exception {
 
         FileContent c = new FileContent(fileName, null);
         ReadMsg readMsg = sim.getMaster().clientRead(fileName);
@@ -23,28 +20,28 @@ public class SimClientHelper {
 
     public static WriteMsg write
         (SimHelper sim, FileContent c, WriteMsg lastWriteMsg)
-        throws IOException {
+        throws Exception {
 
         return sim.getReplica(lastWriteMsg.loc)
             .clientWrite(lastWriteMsg.txnId, lastWriteMsg.seqNum, c);
     }
 
     public static WriteMsg write(SimHelper sim, FileContent c)
-        throws IOException {
+        throws Exception {
 
         WriteMsg writeMsg = sim.getMaster().clientWrite(c);
         return write(sim, c, writeMsg);
     }
 
     public static boolean commit(SimHelper sim, WriteMsg lastWriteMsg)
-        throws RemoteException, MsgNotFoundException, IOException {
+        throws Exception {
 
         return sim.getReplica(lastWriteMsg.loc)
             .clientCommit(lastWriteMsg.txnId, lastWriteMsg.seqNum);
     }
 
     public static boolean abort(SimHelper sim, WriteMsg lastWriteMsg)
-        throws RemoteException {
+        throws Exception {
 
         return sim.getReplica(lastWriteMsg.loc)
             .clientAbort(lastWriteMsg.txnId);

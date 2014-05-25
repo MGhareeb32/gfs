@@ -1,6 +1,10 @@
 package gfs.data;
 
-public class FileContent implements Comparable<FileContent> {
+import java.io.Serializable;
+
+public class FileContent implements Comparable<FileContent>, Serializable {
+
+    private static final long serialVersionUID = 5160516437600848340L;
 
     public final String path;
     public final String data;

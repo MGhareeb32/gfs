@@ -5,5 +5,5 @@ import gfs.data.Host;
 
 public interface ReplicaReplicaInterfaceProvider {
 
-    ReplicaReplicaInterface get(Host h);
+    ReplicaReplicaInterface getRRI(Host h) throws Exception;
 }

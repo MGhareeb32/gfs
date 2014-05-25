@@ -1,32 +1,35 @@
 package sim.helper;
 
 import java.io.File;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
+import utils.Rmi;
 import logger.StdLogger;
 import gfs.Master;
 import gfs.MasterClientInterface;
 import gfs.Replica;
 import gfs.ReplicaClientInterface;
 import gfs.data.Host;
-import gfs.data.HostTcp;
-import gfs.hostprovider.SimpleHostInterfaceProvider;
+import gfs.data.HostRmi;
+import gfs.hostprovider.RmiHostProvider;
 
-public class OfflineSimHelper implements SimHelper {
+public class RmiLocalSimHelper implements SimHelper {
 
     private final File root;
-    private final SimpleHostInterfaceProvider provider;
-    private final HostTcp masterHost;
-    private final HostTcp[] replicaHosts;
+    private final RmiHostProvider provider;
+    private final HostRmi masterHost;
+    private final HostRmi[] replicaHosts;
 
-    public OfflineSimHelper(String root, int nReplica) {
+    public RmiLocalSimHelper(String root, int nReplica) {
         this.root = new File(root);
-        this.provider = new SimpleHostInterfaceProvider();
-        this.masterHost = new HostTcp("localhost", 2000);
-        this.replicaHosts = new HostTcp[nReplica];
+        this.provider = new RmiHostProvider();
+        this.masterHost = new HostRmi("localhost", 2000, "Master");
+        this.replicaHosts = new HostRmi[nReplica];
         for (int i = 0; i < replicaHosts.length; i++)
-            replicaHosts[i] = new HostTcp("localhost", 2001 + i);
+            replicaHosts[i] = new HostRmi("localhost", 2001 + i, "Replica");
     }
 
     @Override
@@ -37,6 +40,7 @@ public class OfflineSimHelper implements SimHelper {
         master.setMe(masterHost);
         master.setRoot(root);
         master.setLogger(new StdLogger(master.getMe().toString()));
+        Rmi.registerLocalObject(masterHost, master);
         // create replicas
         List<Replica> replicas = new ArrayList<Replica>();
         for (int i = 0; i < replicaHosts.length; i++) {
@@ -45,6 +49,7 @@ public class OfflineSimHelper implements SimHelper {
             r.setRoot(root);
             r.setLogger(new StdLogger(r.getMe().toString()));
             replicas.add(r);
+            Rmi.registerLocalObject(replicaHosts[i], r);
         }
         // give replicas to master
         for (Replica r : replicas)
@@ -53,10 +58,6 @@ public class OfflineSimHelper implements SimHelper {
         for (Replica replica : replicas)
             for (Replica r : replicas)
                 replica.addReplica(r.getMe());
-        // create provider
-        provider.add(master.getMe(), master);
-        for (Replica replica : replicas)
-            provider.add(replica.getMe(), replica);
         // assign provider
         master.setReplicaProvider(provider);
         for (Replica replica : replicas)
@@ -66,6 +67,7 @@ public class OfflineSimHelper implements SimHelper {
             replica.init();
         master.init();
         // start simulation
+        Thread.sleep(1000);
         for (Replica replica : replicas) {
             Thread t = new Thread(replica);
             t.setDaemon(true);
@@ -77,12 +79,16 @@ public class OfflineSimHelper implements SimHelper {
     }
 
     @Override
-    public MasterClientInterface getMaster() {
+    public MasterClientInterface getMaster()
+        throws RemoteException, NotBoundException {
+
         return provider.getMCI(masterHost);
     }
 
     @Override
-    public ReplicaClientInterface getReplica(Host h) {
+    public ReplicaClientInterface getReplica(Host h)
+        throws RemoteException, NotBoundException {
+
         return provider.getRCI(h);
     }
 

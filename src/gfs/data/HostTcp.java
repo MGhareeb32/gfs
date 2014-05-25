@@ -2,6 +2,8 @@ package gfs.data;
 
 public class HostTcp extends Host {
 
+    private static final long serialVersionUID = -2399671822372835640L;
+
     public final String ip;
     public final int port;
 
@@ -19,5 +21,10 @@ public class HostTcp extends Host {
     @Override
     public String toString() {
         return ip + ":" + port;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new HostTcp("192.168.1.1:55555"));
+        System.out.println(new HostTcp("localhost:12345"));
     }
 }

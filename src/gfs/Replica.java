@@ -108,7 +108,7 @@ public class Replica extends UnicastRemoteObject
 
     @Override
     public boolean commit(long txnID, long numOfMsgs)
-        throws MsgNotFoundException, RemoteException, IOException {
+        throws RemoteException, MsgNotFoundException, IOException {
 
         log.log(String.format("commit(%d,%d)", txnID, numOfMsgs));
         synchronized (lockTxnIdState) {
@@ -139,7 +139,9 @@ public class Replica extends UnicastRemoteObject
 
         for (Host r : replicas)
             if (!me.equals(r))
-                replicaProvider.get(r).write(txnID, msgSeqNum, data);
+                try {
+                    replicaProvider.getRRI(r).write(txnID, msgSeqNum, data);
+                } catch (Exception e) {}
         WriteMsg out = write(txnID, msgSeqNum, data);
         log.log(String.format("  done write(%s,%d, %d)",
                               data.path, txnID, msgSeqNum));
@@ -148,13 +150,13 @@ public class Replica extends UnicastRemoteObject
 
     @Override
     public boolean clientCommit(long txnID, long numOfMsgs)
-        throws MsgNotFoundException, RemoteException, IOException {
+        throws RemoteException, MsgNotFoundException, IOException {
 
         boolean commited = commit(txnID, numOfMsgs);
         for (Host r : replicas)
             if (!me.equals(r))
                 try {
-                    if (!replicaProvider.get(r).commit(txnID, numOfMsgs))
+                    if (!replicaProvider.getRRI(r).commit(txnID, numOfMsgs))
                         commited = false;
                 } catch (Exception e) {
                     commited = false;
@@ -172,7 +174,7 @@ public class Replica extends UnicastRemoteObject
         for (Host r : replicas)
             if (!me.equals(r))
                 try {
-                    if (!replicaProvider.get(r).abort(txnID))
+                    if (!replicaProvider.getRRI(r).abort(txnID))
                         aborted = false;
                 } catch (Exception e) {
                     aborted = false;

@@ -1,6 +1,10 @@
 package gfs.data;
 
-public abstract class Host implements Comparable<Host> {
+import java.io.Serializable;
+
+public abstract class Host implements Comparable<Host>, Serializable {
+
+    private static final long serialVersionUID = 6843546101606129023L;
 
     public Host(String host) {
     }

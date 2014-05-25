@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.Time;
 
+import utils.Exceptions;
+
 public class FileLogger implements Logger {
 
     private final String owner;
@@ -37,4 +39,8 @@ public class FileLogger implements Logger {
         }
     }
 
+    @Override
+    public void err(Throwable e) {
+        err(Exceptions.toString(e));
+    }
 }

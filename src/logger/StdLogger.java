@@ -2,6 +2,8 @@ package logger;
 
 import java.sql.Time;
 
+import utils.Exceptions;
+
 public class StdLogger implements Logger {
 
     private final String owner;
@@ -28,4 +30,8 @@ public class StdLogger implements Logger {
         }
     }
 
+    @Override
+    public void err(Throwable e) {
+        err(Exceptions.toString(e));
+    }
 }

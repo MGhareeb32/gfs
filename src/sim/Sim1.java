@@ -10,6 +10,7 @@ import java.io.IOException;
 import logger.Logger;
 import logger.StdLogger;
 import sim.helper.OfflineSimHelper;
+import sim.helper.RmiLocalSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
 
@@ -45,6 +46,8 @@ public class Sim1 implements Sim {
                 log.log(fileName[i] + " file written");
             } catch (IOException e1) {
                 log.err(fileName[i] + " can't write");
+            } catch (Exception e) {
+                log.err(e);
             }
         // commit files
         log.log("COMMIT FILE");
@@ -56,6 +59,8 @@ public class Sim1 implements Sim {
                 log.err(fileName[i] + " bad txnId");
             } catch (IOException e) {
                 log.err(fileName[i] + " can't commit");
+            } catch (Exception e) {
+                log.err(e);
             }
         // read file
         log.log("READ FILE");
@@ -67,13 +72,16 @@ public class Sim1 implements Sim {
                 log.err(fileName[i] + " not found");
             } catch (IOException e) {
                 log.err(fileName[i] + " can't read");
+            } catch (Exception e) {
+                log.err(e);
             }
         // done
         log.log("DONE");
     }
 
     public static void main(String[] args) throws Exception {
-        OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
+        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
+        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 1);
         new Sim1().sim(sim);
         System.exit(0);
     }

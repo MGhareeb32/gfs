@@ -10,11 +10,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import logger.DummyLogger;
-import logger.FileLogger;
 import logger.Logger;
 import logger.StdLogger;
 import sim.helper.OfflineSimHelper;
+import sim.helper.RmiLocalSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
 
@@ -44,11 +43,7 @@ public class Sim2 implements Sim {
         public RandomClient(SimHelper sim, int clientId) {
             this.clientId = clientId;
             String loggerName = String.format("client%d", clientId);
-            try {
-                this.log = new FileLogger(loggerName, loggerName + ".txt");
-            } catch (FileNotFoundException e) {
-                this.log = new DummyLogger();
-            }
+            this.log = new StdLogger(loggerName);
             this.sim = sim;
             this.file2WriteMsg = new TreeMap<String, WriteMsg>();
         }
@@ -81,7 +76,9 @@ public class Sim2 implements Sim {
                 log.log(read + " not found");
             } catch (IOException e) {
                 log.err(read + " can't read");
-            }            
+            } catch (Exception e) {
+                log.err(e);
+            }
         }
 
         private void randomWrite() {
@@ -103,6 +100,8 @@ public class Sim2 implements Sim {
             } catch (IOException e1) {
                 log.err(write + " can't write");
                 e1.printStackTrace();
+            } catch (Exception e) {
+                log.err(e);
             }
         }
 
@@ -123,7 +122,9 @@ public class Sim2 implements Sim {
                 log.err(commit + " bad txnId");
             } catch (IOException e) {
                 log.err(commit + " can't commit");
-            }            
+            } catch (Exception e) {
+                log.err(e);
+            }
         }
     }
 
@@ -151,7 +152,8 @@ public class Sim2 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
+        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
+        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 1);
         new Sim2().sim(sim);
         System.exit(0);
     }

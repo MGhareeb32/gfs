@@ -5,5 +5,5 @@ import gfs.data.Host;
 
 public interface MasterClientInterfaceProvider {
 
-    MasterClientInterface get(Host h);
+    MasterClientInterface getMCI(Host h) throws Exception;
 }

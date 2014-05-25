@@ -1,5 +1,7 @@
 package utils;
 
+import gfs.data.HostRmi;
+
 import java.rmi.AccessException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -57,6 +59,12 @@ public class Rmi {
         }
     }
 
+    public static void registerLocalObject
+        (HostRmi h, UnicastRemoteObject obj) {
+
+        registerLocalObject(h.ip, h.port, h.objName, obj);
+    }
+
     // CONNECT AND OBTAIN
 
     public static Registry getRemoteRegistery(String host, int port)
@@ -70,5 +78,11 @@ public class Rmi {
         throws RemoteException, NotBoundException {
 
         return getRemoteRegistery(host, port).lookup(objName);
+    }
+
+    public static Remote getRemoteObject(HostRmi h)
+        throws RemoteException, NotBoundException {
+
+        return getRemoteObject(h.ip, h.port, h.objName);
     }
 }

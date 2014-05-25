@@ -103,9 +103,9 @@ public class Master extends UnicastRemoteObject
             aliveReplicas.clear();
             for (Host r : replicas) {
                 try {
-                    if (replicaProvider.get(r).heartbeat())
+                    if (replicaProvider.getRMI(r).heartbeat())
                         aliveReplicas.add(r);
-                } catch (RemoteException e) {}
+                } catch (Exception e) {}
             }
             alive = new Host[aliveReplicas.size()];
             aliveReplicas.toArray(alive);
