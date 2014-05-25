@@ -26,7 +26,7 @@ public class WriteTxnState implements Comparable<WriteTxnState> {
 
     public boolean commit(File root) throws IOException {
         for (FileContent c : writes)
-                Files.writeFile(root, c);
+            Files.writeFile(root, c);
         return true;
     }
 

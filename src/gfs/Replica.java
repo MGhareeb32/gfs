@@ -36,6 +36,8 @@ public class Replica extends UnicastRemoteObject
     private final Map<Long, WriteTxnState> txnId2State
         = new TreeMap<Long, WriteTxnState>(); // do we need locks?
 
+    private Object lockTxnIdState = new Object();
+
     private Logger log = new DummyLogger();
 
     public Replica() throws RemoteException {
@@ -88,14 +90,17 @@ public class Replica extends UnicastRemoteObject
         throws RemoteException, IOException {
 
         log.log(String.format("write(%s,%d,%d)", data.path, txnID, msgSeqNum));
-        // new txn
-        if (!txnId2State.containsKey(txnID))
-            txnId2State.put(txnID, new WriteTxnState(txnID, data.path));
-        // make sure if good seqNum
-        if (msgSeqNum != txnId2State.get(txnID).getLastSeqNum() + 1)
-            throw new IOException("Bad msgSeqNum");
-        // write
-        WriteTxnState txnState = txnId2State.get(txnID);
+        WriteTxnState txnState = null;
+        synchronized (lockTxnIdState) {
+            // new txn
+            if (!txnId2State.containsKey(txnID))
+                txnId2State.put(txnID, new WriteTxnState(txnID, data.path));
+            // make sure if good seqNum
+            if (msgSeqNum != txnId2State.get(txnID).getLastSeqNum() + 1)
+                throw new IOException("Bad msgSeqNum");
+            // write
+            txnState = txnId2State.get(txnID);
+        }
         txnState.write(data);
         return new WriteMsg(txnID, System.currentTimeMillis(),
                             me, txnState.getLastSeqNum() + 1);
@@ -106,19 +111,23 @@ public class Replica extends UnicastRemoteObject
         throws MsgNotFoundException, RemoteException, IOException {
 
         log.log(String.format("commit(%d,%d)", txnID, numOfMsgs));
-        // bad txnID
-        if (!txnId2State.containsKey(txnID))
-            throw new MsgNotFoundException();
-        // commit
-        txnId2State.get(txnID).commit(root);
-        txnId2State.remove(txnID);
+        synchronized (lockTxnIdState) {
+            // bad txnID
+            if (!txnId2State.containsKey(txnID))
+                throw new MsgNotFoundException();
+            // commit
+            txnId2State.get(txnID).commit(root);
+            txnId2State.remove(txnID);
+        }
         return true;
     }
 
     @Override
     public boolean abort(long txnID) throws RemoteException {
         log.log(String.format("abort(%d)", txnID));
-        txnId2State.remove(txnID);
+        synchronized (lockTxnIdState) {
+            txnId2State.remove(txnID);
+        }
         return true;
     }
 

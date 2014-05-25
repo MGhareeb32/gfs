@@ -31,8 +31,8 @@ public class Files {
 
         File file = new File(root.getPath() + File.separator + filename.path);
         file.getParentFile().mkdirs();
-        String oldData = file.exists() ? readFile(root, new FileContent(
-                filename.path, null)).data : "";
+        String oldData = file.exists() ?
+            readFile(root, new FileContent(filename.path, null)).data : "";
         FileWriter fw = new FileWriter(file);
         fw.write(oldData + filename.data);
         fw.flush();

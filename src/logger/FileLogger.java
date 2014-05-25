@@ -25,6 +25,7 @@ public class FileLogger implements Logger {
     public void log(String s) {
         synchronized (this) {
             print.println("LOG " + getTime() + "[" + owner + "] " + s);
+            print.flush();
         }
     }
 
@@ -32,6 +33,7 @@ public class FileLogger implements Logger {
     public void err(String s) {
         synchronized (this) {
             print.println("ERR " + getTime() + "[" + owner + "] " + s);
+            print.flush();
         }
     }
 

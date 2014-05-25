@@ -23,7 +23,6 @@ public class OfflineSimHelper implements SimHelper {
     private final SimpleMasterClientInterfaceProvider clientMaster;
     private final Host masterHost;
     private final Host[] replicaHosts;
-    private final List<Thread> threads;
 
     public OfflineSimHelper(String root, int nReplica) {
         this.root = new File(root);
@@ -33,7 +32,6 @@ public class OfflineSimHelper implements SimHelper {
         this.replicaHosts = new Host[nReplica];
         for (int i = 0; i < replicaHosts.length; i++)
             replicaHosts[i] = new HostTcp("localhost", 2001 + i);
-        this.threads = new ArrayList<Thread>();
     }
 
     @Override
@@ -84,21 +82,12 @@ public class OfflineSimHelper implements SimHelper {
         // start simulation
         for (Replica replica : replicas) {
             Thread t = new Thread(replica);
-            threads.add(t);
+            t.setDaemon(true);
             t.start();
         }
         Thread t = new Thread(master);
-        threads.add(t);
+        t.setDaemon(true);
         t.start();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void stop() {
-        for (int i = threads.size() - 1; i >= 0; i--) {
-            threads.get(i).stop();
-            threads.remove(i);
-        }
     }
 
     @Override

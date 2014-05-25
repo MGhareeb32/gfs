@@ -13,6 +13,7 @@ import sim.helper.OfflineSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
 
+/** Tests read and write for a single file. **/
 public class Sim0 implements Sim {
 
     @Override
@@ -56,7 +57,7 @@ public class Sim0 implements Sim {
             log.err(fileName + " found");
         } catch (FileNotFoundException e) {
             log.log(fileName + " not found");
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.err(fileName + " can't read");
         }
         // commit file
@@ -76,22 +77,17 @@ public class Sim0 implements Sim {
             log.log(file.path + "=[" + file.data + "]");
         } catch (FileNotFoundException e) {
             log.err(fileName + " not found");
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.err(fileName + " can't read");
         }
         // done
-        try {
-            sim.stop();
-            log.log("DONE");
-        } catch (Exception e) {
-            log.err("Can't stop simulation");
-            e.printStackTrace();
-        }
+        log.log("DONE");
     }
 
     public static void main(String[] args) throws Exception {
         OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
         new Sim0().sim(sim);
+        System.exit(0);
     }
 
 }
