@@ -80,8 +80,8 @@ public class Sim1 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        // OfflineSimHelper sim = new OfflineSimHelper("sim1", 3, false);
-        RmiLocalSimHelper sim = new RmiLocalSimHelper("sim1", 3, false);
+        OfflineSimHelper sim = new OfflineSimHelper("sim1", 3, false);
+        // RmiLocalSimHelper sim = new RmiLocalSimHelper("sim1", 3, false);
         new Sim1().sim(sim);
         System.exit(0);
     }
