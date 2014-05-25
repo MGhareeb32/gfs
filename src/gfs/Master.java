@@ -9,6 +9,7 @@ import gfs.hostprovider.ReplicaMasterInterfaceProvider;
 import gfs.hostprovider.RmiHostProvider;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -22,8 +23,8 @@ import java.util.Set;
 
 import utils.Rmi;
 import logger.DummyLogger;
+import logger.FileLogger;
 import logger.Logger;
-import logger.StdLogger;
 
 public class Master extends UnicastRemoteObject
                     implements MasterClientInterface, Runnable {
@@ -157,7 +158,8 @@ public class Master extends UnicastRemoteObject
         return me.toString() + "[" + root + "]";
     }
 
-    public static void main(String[] args) throws RemoteException {
+    public static void main(String[] args) throws RemoteException, FileNotFoundException {
+        System.out.println(Arrays.toString(args));
         HostRmi masterHost = null;
         List<HostRmi> replicaHosts = new ArrayList<HostRmi>();
         try {
@@ -172,9 +174,10 @@ public class Master extends UnicastRemoteObject
             System.exit(1);
         }
         // create master
+        String root = "./gfs" + File.separator + masterHost.objName;
         Master master = new Master();
         master.setMe(masterHost);
-        master.setLogger(new StdLogger(masterHost.toString()));
+        master.setLogger(new FileLogger(masterHost.objName, root + ".log"));
         // rmi
         Rmi.registerLocalObject(masterHost, master);
         // give replicas to master
@@ -184,6 +187,7 @@ public class Master extends UnicastRemoteObject
         master.setReplicaProvider(new RmiHostProvider());
         // run
         master.init();
+        System.out.println(masterHost + " RUNNING");
         master.run();
     }
 }

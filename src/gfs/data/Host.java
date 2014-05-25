@@ -9,8 +9,6 @@ public abstract class Host implements Comparable<Host>, Serializable {
     public Host(String host) {
     }
 
-    public abstract String getRoot();
-
     @Override
     public final boolean equals(Object obj) {
         if (obj instanceof HostTcp)

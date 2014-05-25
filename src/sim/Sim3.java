@@ -6,6 +6,7 @@ import gfs.data.ReadMsg;
 import gfs.data.WriteMsg;
 import logger.Logger;
 import logger.StdLogger;
+import sim.helper.OfflineSimHelper;
 import sim.helper.RmiLocalSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
@@ -88,8 +89,8 @@ public class Sim3 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 3, false);
-        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 100, false);
+         // OfflineSimHelper sim = new OfflineSimHelper("sim3", 100, false);
+        RmiLocalSimHelper sim = new RmiLocalSimHelper("sim3", 100, false);
         new Sim3().sim(sim);
         System.exit(0);
     }

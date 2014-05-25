@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import logger.Logger;
 import logger.StdLogger;
+import sim.helper.OfflineSimHelper;
 import sim.helper.RmiLocalSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
@@ -153,8 +154,8 @@ public class Sim2 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 3, false);
-        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 3, false);
+        // OfflineSimHelper sim = new OfflineSimHelper("sim2", 3, false);
+        RmiLocalSimHelper sim = new RmiLocalSimHelper("sim2", 4, false);
         new Sim2().sim(sim);
         System.exit(0);
     }

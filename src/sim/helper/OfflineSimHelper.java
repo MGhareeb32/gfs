@@ -16,20 +16,19 @@ import gfs.hostprovider.SimpleHostInterfaceProvider;
 
 public class OfflineSimHelper implements SimHelper {
 
-    private final File root;
+    private final String root;
     private final SimpleHostInterfaceProvider provider;
     private final HostTcp masterHost;
     private final HostTcp[] replicaHosts;
     private final boolean verbose;
 
     public OfflineSimHelper(String root, int nReplica, boolean verbose) {
-        this.root = new File(root);
+        this.root = root;
         this.provider = new SimpleHostInterfaceProvider();
         this.masterHost = new HostTcp("localhost", 2000);
         this.replicaHosts = new HostTcp[nReplica];
         for (int i = 0; i < replicaHosts.length; i++) {
             replicaHosts[i] = new HostTcp("localhost", 2001 + i);
-            replicaHosts[i].setRoot("/replica" + i);
         }
         this.verbose = verbose;
     }
@@ -37,7 +36,7 @@ public class OfflineSimHelper implements SimHelper {
     @Override
     public void start() throws Exception {
 
-        Files.deleteDir(root);
+        Files.deleteDir(new File("gfs" + File.separator + root));
         // create master
         Master master = new Master();
         master.setMe(masterHost);
@@ -48,7 +47,8 @@ public class OfflineSimHelper implements SimHelper {
         for (int i = 0; i < replicaHosts.length; i++) {
             Replica r = new Replica();
             r.setMe(replicaHosts[i]);
-            r.setRoot(root);
+            r.setRoot("gfs" + File.separator + root + File.separator +
+                      String.format("replica-%02d", i));
             if (verbose)
                 r.setLogger(new StdLogger(r.getMe().toString()));
             replicas.add(r);

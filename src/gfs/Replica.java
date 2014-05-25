@@ -10,17 +10,19 @@ import gfs.hostprovider.ReplicaReplicaInterfaceProvider;
 import gfs.hostprovider.RmiHostProvider;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import logger.DummyLogger;
+import logger.FileLogger;
 import logger.Logger;
-import logger.StdLogger;
 import utils.Files;
 import utils.Rmi;
 
@@ -31,7 +33,7 @@ public class Replica extends UnicastRemoteObject
 
     private static final long serialVersionUID = -7414743350021030181L;
 
-    private File root = new File("./gfs");
+    private File root = null;
 
     private Host me;
     private ReplicaReplicaInterfaceProvider replicaProvider;
@@ -60,12 +62,8 @@ public class Replica extends UnicastRemoteObject
         this.me = me;
     }
 
-    public void setRoot(File root) {
-        this.root = new File(root + me.getRoot());
-    }
-
-    public File getRoot() {
-        return root;
+    public void setRoot(String root) {
+        this.root = new File(root);
     }
 
     public void addReplica(Host replica) {
@@ -242,13 +240,20 @@ public class Replica extends UnicastRemoteObject
         root.mkdirs();
         Files.deleteDir(root);
         root.mkdirs();
-        log.log("Root cleaned");
+        log.log(String.format("%s cleaned", root));
         // TODO Auto-generated method stub
     }
 
     @Override
     public void run() {
         // TODO Auto-generated method stub
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                log.log(String.format("%d uncommitted txns",
+                                      txnId2State.size()));
+            } catch (InterruptedException e) {}
+        }
     }
 
     @Override
@@ -256,7 +261,8 @@ public class Replica extends UnicastRemoteObject
         return me.toString() + "[" + root + "]";
     }
 
-    public static void main(String[] args) throws RemoteException {
+    public static void main(String[] args) throws RemoteException, FileNotFoundException {
+        System.out.println(Arrays.toString(args));
         HostRmi replicaHost = null;
         List<HostRmi> replicaHosts = new ArrayList<HostRmi>();
         try {
@@ -270,10 +276,14 @@ public class Replica extends UnicastRemoteObject
             System.out.println("    <replica>     <ip>:<port>/<rmi_name>");
             System.exit(1);
         }
+        String root = "./gfs" + File.separator + replicaHost.objName;
+        String logs = root + ".log";
+        new File(root).mkdirs();
         // create master
         Replica replica = new Replica();
         replica.setMe(replicaHost);
-        replica.setLogger(new StdLogger(replicaHost.toString()));
+        replica.setRoot(root);
+        replica.setLogger(new FileLogger(replicaHost.objName, logs));
         // rmi
         Rmi.registerLocalObject(replicaHost, replica);
         // give replicas to master
@@ -283,6 +293,7 @@ public class Replica extends UnicastRemoteObject
         replica.setReplicaProvider(new RmiHostProvider());
         // run
         replica.init();
+        System.out.println(replicaHost + " RUNNING");
         replica.run();
     }
 }

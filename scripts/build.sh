@@ -74,19 +74,17 @@ jar cfe Replica.jar gfs.Replica \
 
 cd ..
 
+# move up
+
 mv ./out/Master.jar ./Master.jar
+chmod -fR 777 ./Master.jar
+chmod -fR u+x ./Master.jar
+
 mv ./out/Replica.jar ./Replica.jar
+chmod -fR 777 ./Replica.jar
+chmod -fR u+x ./Replica.jar
 
-./Master.jar localhost:2000/Master localhost:2001/Replica localhost:2002/Replica
-exit
-./Replica.jar localhost:2001/Replica localhost:2002/Replica
-./Replica.jar localhost:2002/Replica localhost:2001/Replica
-
-jar cfe Client.jar Client 'Client.class' 'Client$1.class' \
-                          'Hello_Stub.class' 'HelloInterface.class'
-cd ..
-
-mv src/Client.jar Client.jar
-mv src/Server.jar Server.jar
-
-(chmod -fR 777 . && chmod -fR u+x .)&
+# generate scripts
+java -cp out scripts.GenerateUploadScript
+java -cp out scripts.GenerateStartScript
+java -cp out scripts.GenerateStopScript
