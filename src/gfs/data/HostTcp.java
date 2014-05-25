@@ -6,6 +6,7 @@ public class HostTcp extends Host {
 
     public final String ip;
     public final int port;
+    public String root = ".";
 
     public HostTcp(String ipColonPort) {
         super(ipColonPort);
@@ -16,6 +17,15 @@ public class HostTcp extends Host {
 
     public HostTcp(String ip, int port) {
         this(ip + ":" + port);
+    }
+
+    @Override
+    public String getRoot() {
+        return root;
+    }
+
+    public void setRoot(String root) {
+        this.root = root;
     }
 
     @Override

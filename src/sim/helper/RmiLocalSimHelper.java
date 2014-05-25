@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
+import utils.Files;
 import utils.Rmi;
 import logger.StdLogger;
 import gfs.Master;
@@ -28,17 +29,19 @@ public class RmiLocalSimHelper implements SimHelper {
         this.provider = new RmiHostProvider();
         this.masterHost = new HostRmi("localhost", 2000, "Master");
         this.replicaHosts = new HostRmi[nReplica];
-        for (int i = 0; i < replicaHosts.length; i++)
+        for (int i = 0; i < replicaHosts.length; i++) {
             replicaHosts[i] = new HostRmi("localhost", 2001 + i, "Replica");
+            replicaHosts[i].setRoot("/replica" + i);
+        }
     }
 
     @Override
     public void start() throws Exception {
 
+        Files.deleteDir(root);
         // create master
         Master master = new Master();
         master.setMe(masterHost);
-        master.setRoot(root);
         master.setLogger(new StdLogger(master.getMe().toString()));
         Rmi.registerLocalObject(masterHost, master);
         // create replicas

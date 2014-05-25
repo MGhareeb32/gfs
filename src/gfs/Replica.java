@@ -55,7 +55,7 @@ public class Replica extends UnicastRemoteObject
     }
 
     public void setRoot(File root) {
-        this.root = root;
+        this.root = new File(root + me.getRoot());
     }
 
     public File getRoot() {

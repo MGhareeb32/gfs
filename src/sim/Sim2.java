@@ -152,8 +152,8 @@ public class Sim2 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 1);
-        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 1);
+        OfflineSimHelper sim = new OfflineSimHelper("./gfs", 3);
+        // RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 1);
         new Sim2().sim(sim);
         System.exit(0);
     }

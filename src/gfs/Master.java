@@ -59,10 +59,6 @@ public class Master extends UnicastRemoteObject
         this.me = me;
     }
 
-    public void setRoot(File root) {
-        this.root = root;
-    }
-
     public void addReplica(Host replica) {
         replicas.add(replica);
     }

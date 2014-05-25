@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import utils.Files;
 import logger.StdLogger;
 import gfs.Master;
 import gfs.MasterClientInterface;
@@ -25,17 +26,19 @@ public class OfflineSimHelper implements SimHelper {
         this.provider = new SimpleHostInterfaceProvider();
         this.masterHost = new HostTcp("localhost", 2000);
         this.replicaHosts = new HostTcp[nReplica];
-        for (int i = 0; i < replicaHosts.length; i++)
+        for (int i = 0; i < replicaHosts.length; i++) {
             replicaHosts[i] = new HostTcp("localhost", 2001 + i);
+            replicaHosts[i].setRoot("/replica" + i);
+        }
     }
 
     @Override
     public void start() throws Exception {
 
+        Files.deleteDir(root);
         // create master
         Master master = new Master();
         master.setMe(masterHost);
-        master.setRoot(root);
         master.setLogger(new StdLogger(master.getMe().toString()));
         // create replicas
         List<Replica> replicas = new ArrayList<Replica>();
