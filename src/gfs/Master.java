@@ -35,7 +35,7 @@ public class Master extends UnicastRemoteObject
     private ReplicaMasterInterfaceProvider replicaProvider;
     private final Set<Host> aliveReplicas = new HashSet<Host>();
 
-    private int lastAssignedReplica = 0;
+    private int lastAssignedReplica = -1;
     private final Map<FileContent, Host> file2Replica
         = new HashMap<FileContent, Host>();
 

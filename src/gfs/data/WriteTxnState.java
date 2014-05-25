@@ -10,7 +10,7 @@ import utils.Files;
 public class WriteTxnState implements Comparable<WriteTxnState> {
 
     public final long id;
-    private final String path;
+    public final String path;
     private final List<FileContent> writes = new ArrayList<FileContent>();
 
     public WriteTxnState(long id, String path) {

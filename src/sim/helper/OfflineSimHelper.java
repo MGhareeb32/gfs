@@ -20,8 +20,9 @@ public class OfflineSimHelper implements SimHelper {
     private final SimpleHostInterfaceProvider provider;
     private final HostTcp masterHost;
     private final HostTcp[] replicaHosts;
+    private final boolean verbose;
 
-    public OfflineSimHelper(String root, int nReplica) {
+    public OfflineSimHelper(String root, int nReplica, boolean verbose) {
         this.root = new File(root);
         this.provider = new SimpleHostInterfaceProvider();
         this.masterHost = new HostTcp("localhost", 2000);
@@ -30,6 +31,7 @@ public class OfflineSimHelper implements SimHelper {
             replicaHosts[i] = new HostTcp("localhost", 2001 + i);
             replicaHosts[i].setRoot("/replica" + i);
         }
+        this.verbose = verbose;
     }
 
     @Override
@@ -39,14 +41,16 @@ public class OfflineSimHelper implements SimHelper {
         // create master
         Master master = new Master();
         master.setMe(masterHost);
-        master.setLogger(new StdLogger(master.getMe().toString()));
+        if (verbose)
+            master.setLogger(new StdLogger(master.getMe().toString()));
         // create replicas
         List<Replica> replicas = new ArrayList<Replica>();
         for (int i = 0; i < replicaHosts.length; i++) {
             Replica r = new Replica();
             r.setMe(replicaHosts[i]);
             r.setRoot(root);
-            r.setLogger(new StdLogger(r.getMe().toString()));
+            if (verbose)
+                r.setLogger(new StdLogger(r.getMe().toString()));
             replicas.add(r);
         }
         // give replicas to master

@@ -37,6 +37,8 @@ public class Replica extends UnicastRemoteObject
         = new TreeMap<Long, WriteTxnState>(); // do we need locks?
 
     private Object lockTxnIdState = new Object();
+    private Map<String, Object> path2commitLock
+        = new TreeMap<String, Object>();
 
     private Logger log = new DummyLogger();
 
@@ -89,7 +91,8 @@ public class Replica extends UnicastRemoteObject
     public WriteMsg write(long txnID, long msgSeqNum, FileContent data)
         throws RemoteException, IOException {
 
-        log.log(String.format("write(%s,%d,%d)", data.path, txnID, msgSeqNum));
+        log.log(String.format("  write(%s,%d,%d)", data.path,
+                              txnID, msgSeqNum));
         WriteTxnState txnState = null;
         synchronized (lockTxnIdState) {
             // new txn
@@ -110,8 +113,8 @@ public class Replica extends UnicastRemoteObject
     public boolean commit(long txnID, long numOfMsgs)
         throws RemoteException, MsgNotFoundException, IOException {
 
-        log.log(String.format("commit(%d,%d)", txnID, numOfMsgs));
         synchronized (lockTxnIdState) {
+            log.log(String.format("  commit(%d)", txnID));
             // bad txnID
             if (!txnId2State.containsKey(txnID))
                 throw new MsgNotFoundException();
@@ -134,14 +137,37 @@ public class Replica extends UnicastRemoteObject
     // CLIENT-REPLICA
 
     @Override
-    public WriteMsg clientWrite(long txnID, long msgSeqNum, FileContent data)
+    public WriteMsg clientWrite
+        (final long txnID, final long msgSeqNum, final FileContent data)
         throws RemoteException, IOException {
 
+        log.log(String.format("write(%s,%d,%d)", data.path, txnID, msgSeqNum));
+        // write to other replicas in parallel
+        List<Thread> ths = new ArrayList<Thread>();
         for (Host r : replicas)
-            if (!me.equals(r))
-                try {
-                    replicaProvider.getRRI(r).write(txnID, msgSeqNum, data);
-                } catch (Exception e) {}
+            if (!me.equals(r)) {
+                final Host otherR = r;
+                Thread th = new Thread() {
+                    public void run() {
+                        try {
+                            replicaProvider.getRRI(otherR)
+                                .write(txnID, msgSeqNum, data);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                };
+                th.start();
+                ths.add(th);
+            }
+        // make sure they all finish
+        for (Thread th : ths)
+            try {
+                th.join();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        // write to self
         WriteMsg out = write(txnID, msgSeqNum, data);
         log.log(String.format("  done write(%s,%d, %d)",
                               data.path, txnID, msgSeqNum));
@@ -152,19 +178,29 @@ public class Replica extends UnicastRemoteObject
     public boolean clientCommit(long txnID, long numOfMsgs)
         throws RemoteException, MsgNotFoundException, IOException {
 
-        boolean commited = commit(txnID, numOfMsgs);
-        for (Host r : replicas)
-            if (!me.equals(r))
-                try {
-                    if (!replicaProvider.getRRI(r).commit(txnID, numOfMsgs))
+        // make sure only one commit is executed per file
+        if (!path2commitLock.containsKey(txnId2State.get(txnID).path))
+            path2commitLock.put(txnId2State.get(txnID).path, new Object());
+        synchronized (path2commitLock.get(txnId2State.get(txnID).path)) {
+            // commit self
+            log.log(String.format("commit(%d)", txnID));
+            boolean commited = commit(txnID, numOfMsgs);
+            // commit replicas
+            for (Host r : replicas)
+                if (!me.equals(r))
+                    try {
+                        ReplicaReplicaInterface replica
+                            = replicaProvider.getRRI(r);
+                        commited = commited
+                                 && replica.commit(txnID, numOfMsgs);
+                    } catch (Exception e) {
                         commited = false;
-                } catch (Exception e) {
-                    commited = false;
-                }
-        log.log(String.format(commited ? "  done commit(%d,%d)"
-                                       : "  fail commit(%d,%d)",
-                              txnID, numOfMsgs));
-        return commited;
+                    }
+            log.log(String.format(commited ? "  done commit(%d,%d)"
+                                           : "  fail commit(%d,%d)",
+                                  txnID, numOfMsgs));
+            return commited;
+        }
     }
 
     @Override

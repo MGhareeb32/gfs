@@ -12,12 +12,11 @@ import java.util.TreeMap;
 
 import logger.Logger;
 import logger.StdLogger;
-import sim.helper.OfflineSimHelper;
 import sim.helper.RmiLocalSimHelper;
 import sim.helper.SimClientHelper;
 import sim.helper.SimHelper;
 
-/** Tests random concurrent reads and writes for multiple file. **/
+/** Tests random concurrent reads and writes for multiple files. **/
 public class Sim2 implements Sim {
 
     private final String[] fileName;
@@ -64,6 +63,8 @@ public class Sim2 implements Sim {
                     break;
                 }
                 }
+            while (file2WriteMsg.size() > 0)
+                randomCommit();
         }
 
         private void randomRead() {
@@ -152,8 +153,8 @@ public class Sim2 implements Sim {
     }
 
     public static void main(String[] args) throws Exception {
-        OfflineSimHelper sim = new OfflineSimHelper("./gfs", 3);
-        // RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 1);
+        // OfflineSimHelper sim = new OfflineSimHelper("./gfs", 3, false);
+        RmiLocalSimHelper sim = new RmiLocalSimHelper("./gfs", 3, false);
         new Sim2().sim(sim);
         System.exit(0);
     }

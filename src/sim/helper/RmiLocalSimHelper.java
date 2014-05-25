@@ -23,16 +23,18 @@ public class RmiLocalSimHelper implements SimHelper {
     private final RmiHostProvider provider;
     private final HostRmi masterHost;
     private final HostRmi[] replicaHosts;
+    private final boolean verbose;
 
-    public RmiLocalSimHelper(String root, int nReplica) {
+    public RmiLocalSimHelper(String root, int nReplica, boolean verbose) {
         this.root = new File(root);
         this.provider = new RmiHostProvider();
         this.masterHost = new HostRmi("localhost", 2000, "Master");
         this.replicaHosts = new HostRmi[nReplica];
         for (int i = 0; i < replicaHosts.length; i++) {
             replicaHosts[i] = new HostRmi("localhost", 2001 + i, "Replica");
-            replicaHosts[i].setRoot("/replica" + i);
+            replicaHosts[i].setRoot(String.format("/replica%02d", i));
         }
+        this.verbose = verbose;
     }
 
     @Override
@@ -42,7 +44,8 @@ public class RmiLocalSimHelper implements SimHelper {
         // create master
         Master master = new Master();
         master.setMe(masterHost);
-        master.setLogger(new StdLogger(master.getMe().toString()));
+        if (verbose)
+            master.setLogger(new StdLogger(master.getMe().toString()));
         Rmi.registerLocalObject(masterHost, master);
         // create replicas
         List<Replica> replicas = new ArrayList<Replica>();
@@ -50,7 +53,8 @@ public class RmiLocalSimHelper implements SimHelper {
             Replica r = new Replica();
             r.setMe(replicaHosts[i]);
             r.setRoot(root);
-            r.setLogger(new StdLogger(r.getMe().toString()));
+            if (verbose)
+                r.setLogger(new StdLogger(r.getMe().toString()));
             replicas.add(r);
             Rmi.registerLocalObject(replicaHosts[i], r);
         }
